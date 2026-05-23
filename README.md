@@ -13,10 +13,10 @@ Automatisches Setup und Update-Tool für **txAdmin / FXServer** auf **Windows Se
 ## Schnellstart (PowerShell als Administrator)
 
 ```powershell
-irm https://raw.githubusercontent.com/DEIN-USERNAME/txadmin-tool/main/txadmin-tool.ps1 | iex
+irm https://raw.githubusercontent.com/fynn-2557/txadmin-tool/main/txadmin-tool.ps1 | iex
 ```
 
-> **Hinweis**: `DEIN-USERNAME` durch deinen GitHub-Benutzernamen ersetzen.
+
 
 ## Voraussetzungen
 
