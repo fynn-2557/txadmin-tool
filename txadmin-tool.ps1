@@ -261,7 +261,8 @@ function Install-MySQL {
     if ($svc) { Start-Service $svc.Name -ErrorAction SilentlyContinue }
 
     $mysqlExe = "C:\Program Files\MySQL\MySQL Server $short\bin\mysql.exe"
-    $logPath  = (Get-ChildItem "$env:ProgramData\MySQL" -Recurse -Filter "*.err" -ErrorAction SilentlyContinue | Select-Object -First 1)?.FullName
+    $logFile  = Get-ChildItem "$env:ProgramData\MySQL" -Recurse -Filter "*.err" -ErrorAction SilentlyContinue | Select-Object -First 1
+    $logPath  = if ($logFile) { $logFile.FullName } else { $null }
     if ($logPath) {
         $tmpPass = (Select-String -Path $logPath -Pattern "temporary password.*: (.+)$").Matches.Groups[1].Value.Trim()
         if ($tmpPass -and (Test-Path $mysqlExe)) {
@@ -345,8 +346,10 @@ function Start-Update {
         $currentBuild = Get-InstalledFxBuild
         $latestBuild  = Get-FxBuild
 
-        Write-Log "Aktuell installiert : $(if($currentBuild){"Build $currentBuild"}else{"unbekannt"})"
-        Write-Log "Neueste Version     : Build $latestBuild"
+        $currentStr = if($currentBuild){"Build $currentBuild"}else{"unbekannt"}
+        $latestStr  = "Build $latestBuild"
+        Write-Log "Aktuell installiert : $currentStr"
+        Write-Log "Neueste Version     : $latestStr"
 
         if ($currentBuild -and $currentBuild -eq $latestBuild) {
             Write-Log ""
@@ -358,8 +361,9 @@ function Start-Update {
             return
         }
 
+        $currentStr = if($currentBuild){"Build $currentBuild"}else{"unbekannt"}
         $confirm = [Windows.Forms.MessageBox]::Show(
-            "Update verfuegbar!`n`nAktuell : $(if($currentBuild){"Build $currentBuild"}else{"unbekannt"})`nNeu     : Build $latestBuild`n`nServer wird kurz gestoppt. Fortfahren?",
+            "Update verfuegbar!`n`nAktuell : $currentStr`nNeu     : Build $latestBuild`n`nServer wird kurz gestoppt. Fortfahren?",
             "Update bestaetigen", "YesNo", "Question"
         )
         if ($confirm -ne "Yes") { Write-Log "Update abgebrochen."; return }
@@ -581,7 +585,7 @@ $script:btnInstall.Add_Click({
     }
     $db = if ($dbCombo.SelectedIndex -eq 0) { "MariaDB" } else { "MySQL" }
     $tabs.SelectedIndex = 2  # Log-Tab
-    $job = [System.Threading.Thread]::new({ Start-Install $db $p1 })
+    $job = New-Object System.Threading.Thread({ Start-Install $db $p1 })
     $job.IsBackground = $true; $job.Start()
 })
 $tabInstall.Controls.Add($script:btnInstall)
@@ -613,7 +617,7 @@ $script:btnUpdate.FlatAppearance.BorderSize = 0
 $script:btnUpdate.Cursor    = "Hand"
 $script:btnUpdate.Add_Click({
     $tabs.SelectedIndex = 2
-    $job = [System.Threading.Thread]::new({ Start-Update })
+    $job = New-Object System.Threading.Thread({ Start-Update })
     $job.IsBackground = $true; $job.Start()
 })
 $tabUpdate.Controls.Add($script:btnUpdate)
